@@ -11,46 +11,55 @@ function install_archive() {
   local version_dir="${2}"
   local archive_url="${3}"
   local archive="${archive_url##*/}"
-  curl -L -o "${TMP_DIR}/${archive}" "${archive_url}" || { echo "Unable to download ${tool} from '${archive_url}'"; exit 1; }
-  mkdir -p "${TMP_DIR}/${tool}/${version_dir}" && unzip "${TMP_DIR}/${archive}" -d "${TMP_DIR}/${tool}/${version_dir}"
-  mkdir -p "${HOME_DIR}/${tool}/${version_dir}"
-  mv "${TMP_DIR}/${tool}/${version_dir}/"*/* "${HOME_DIR}/${tool}/${version_dir}/"
+  curl -L -o "${TMP_DIR}/${archive}" "${archive_url}" || {
+    echo "Unable to download ${tool} from '${archive_url}'"
+    exit 1
+  }
+  local tmp_install_dir="${TMP_DIR}/${tool}/${version_dir}/"
+  mkdir -p "${tmp_install_dir}" && {
+    unzip -q "${TMP_DIR}/${archive}" -d "${tmp_install_dir}"
+  }
+  local install_dir="${HOME_DIR}/${tool}/${version_dir}"
+  mkdir -p "${install_dir}" && {
+    mv "${tmp_install_dir}"*/* "${install_dir}"
+  }
 }
 
 function ensure_tool() {
   local tool="${1}"
   local version_dir="${2}"
   local archive_url="${3}"
-  [ ! -d "${HOME_DIR}/${tool}/${version_dir}" ] && {
-      echo "Installing ${tool} on ${version_dir} from ${archive_url}..."
-      install_archive "${tool}" "${version_dir}" "${archive_url}"
-    } || echo "Already installed ${tool} on ${version_dir}"
+  local install_dir="${HOME_DIR}/${tool}/${version_dir}/"
+  [ ! -d "${install_dir}" ] && {
+    echo -e "* Installing ${tool} on ${install_dir} \n  from ${archive_url}...\n"
+    install_archive "${tool}" "${version_dir}" "${archive_url}"
+  } || echo -e "* Already installed ${tool} on ${install_dir}\n"
 }
 
 function machine() {
-  unameOut="$(uname -s)"
+  local unameOut="$(uname -s)"
   case "${unameOut}" in
-    Linux*) machine="linux" ;;
-    Darwin*) machine="osx" ;;
-    CYGWIN*) machine="cygwin" ;;
-    MINGW*) machine="windows" ;;
-    *) machine="unknown:${unameOut}" ;;
+  Linux*) machine="linux" ;;
+  Darwin*) machine="osx" ;;
+  CYGWIN*) machine="cygwin" ;;
+  MINGW*) machine="windows" ;;
+  *) machine="unknown:${unameOut}" ;;
   esac
   echo "${machine}"
 }
 
 function main() {
-  usage="Devtools update.
+  HOME_DIR="${HOME}/dev/tools"
+  local usage="Devtools update.
   Usage:
     update.sh -d
     update.sh -h | --help
 
   Options:
-    -d --install-dir <PATH> Devtools installation directory [default: ${HOME}/dev/tools/]
+    -d --install-dir <PATH> Devtools installation directory [default: '${HOME_DIR}']
     -h --help               Show this message
   "
 
-  HOME_DIR="${HOME}/dev/tools/"
   while (("$#")); do
     case "$1" in
     -h | --help)
@@ -66,7 +75,7 @@ function main() {
       break
       ;;
     -* | --*) # unsupported flags
-      error "Unsupported flag ${1}"
+      echo "Unsupported option ${1}"
       exit 1
       ;;
     *) # preserve positional args
@@ -79,25 +88,28 @@ function main() {
 
   mkdir -p "${HOME_DIR}"
   cd "${HOME_DIR}" || exit
-  machine="$(machine)"
-  [[ ${machine} == "windows" || ${machine} == "osx" ]] || { echo >&2 "Unsupported operating system: ${machine}"; exit 1; }
+  readonly machine="$(machine)"
+  [[ ${machine} == "windows" || ${machine} == "osx" ]] || {
+    echo >&2 "Unsupported operating system: ${machine}"
+    exit 1
+  }
   TMP_DIR="$(mktemp -d -t 'devtools.XXXXXX')"
   trap 'rm -rf -- "${TMP_DIR}"' EXIT
 
-  echo "Installing devtools on ${HOME_DIR}..."
+  echo -e "* Installing devtools on ${HOME_DIR}...\n"
   case "${machine}" in
-    windows)
-      ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
-      ensure_tool "maven" "apache-maven-3.8.1" ${maven_3_8_1_url}
-      ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
-      ;;
-    osx)
-      ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
-      ensure_tool "maven" "apache-maven-3.8.1" ${maven_3_8_1_url}
-      ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
-      ;;
+  windows)
+    ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
+    ensure_tool "maven" "apache-maven-3.8.1" ${maven_3_8_1_url}
+    ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
+    ;;
+  osx)
+    ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
+    ensure_tool "maven" "apache-maven-3.8.1" ${maven_3_8_1_url}
+    ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
+    ;;
   esac
-  echo "Completed devtools installation"
+  echo -e "* Completed devtools installation\n"
 }
 
 main "$@"
