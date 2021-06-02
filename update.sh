@@ -6,18 +6,42 @@ maven_3_8_1_url="https://mirrors.gethosted.online/apache/maven/maven-3/3.8.1/bin
 nodejs_14_win_url="https://nodejs.org/dist/v14.17.0/node-v14.17.0-win-x64.zip"
 nodejs_14_osx_url="https://nodejs.org/dist/v14.17.0/node-v14.17.0-darwin-x64.tar.gz"
 
+function stderr() {
+  echo -e "$*" >&2
+}
+
+function extract() {
+  local archive="${1}"
+  local extraction_dir="${2}"
+  local filename=$(basename -- "${archive}")
+
+  case "${filename}" in
+  *.zip)
+    unzip -q "${archive}" -d "${extraction_dir}"
+    ;;
+  *.tar.gz)
+    tar -xf "${archive}" -C "${extraction_dir}"
+    ;;
+  *)
+    stderr "Unsupported archive extension for: ${filename}"
+    exit 1
+    ;;
+  esac
+}
+
 function install_archive() {
   local tool="${1}"
   local version_dir="${2}"
   local archive_url="${3}"
   local archive="${archive_url##*/}"
   curl -L -o "${TMP_DIR}/${archive}" "${archive_url}" || {
-    echo "Unable to download ${tool} from '${archive_url}'"
+    stderr "Unable to download ${tool} from '${archive_url}'"
     exit 1
   }
+  stderr ""
   local tmp_install_dir="${TMP_DIR}/${tool}/${version_dir}/"
   mkdir -p "${tmp_install_dir}" && {
-    unzip -q "${TMP_DIR}/${archive}" -d "${tmp_install_dir}"
+    extract "${TMP_DIR}/${archive}" "${tmp_install_dir}"
   }
   local install_dir="${HOME_DIR}/${tool}/${version_dir}"
   mkdir -p "${install_dir}" && {
@@ -31,9 +55,9 @@ function ensure_tool() {
   local archive_url="${3}"
   local install_dir="${HOME_DIR}/${tool}/${version_dir}/"
   [ ! -d "${install_dir}" ] && {
-    echo -e "* Installing ${tool} on ${install_dir} \n  from ${archive_url}...\n"
+    stderr "* Installing ${tool} on ${install_dir} \n  from ${archive_url}...\n"
     install_archive "${tool}" "${version_dir}" "${archive_url}"
-  } || echo -e "* Already installed ${tool} on ${install_dir}\n"
+  } || stderr "* Already installed ${tool} on ${install_dir}\n"
 }
 
 function machine() {
@@ -49,7 +73,7 @@ function machine() {
 }
 
 function main() {
-  HOME_DIR="${HOME}/dev/tools"
+  HOME_DIR="${HOME}/devtools"
   local usage="Devtools update.
   Usage:
     update.sh -d
@@ -75,7 +99,7 @@ function main() {
       break
       ;;
     -* | --*) # unsupported flags
-      echo "Unsupported option ${1}"
+      stderr "Unsupported option ${1}"
       exit 1
       ;;
     *) # preserve positional args
@@ -90,13 +114,13 @@ function main() {
   cd "${HOME_DIR}" || exit
   readonly machine="$(machine)"
   [[ ${machine} == "windows" || ${machine} == "osx" ]] || {
-    echo >&2 "Unsupported operating system: ${machine}"
+    stderr "Unsupported operating system: ${machine}"
     exit 1
   }
   TMP_DIR="$(mktemp -d -t 'devtools.XXXXXX')"
   trap 'rm -rf -- "${TMP_DIR}"' EXIT
 
-  echo -e "* Installing devtools on ${HOME_DIR}...\n"
+  stderr "* Installing devtools on ${HOME_DIR}...\n"
   case "${machine}" in
   windows)
     ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
@@ -104,12 +128,12 @@ function main() {
     ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
     ;;
   osx)
-    ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_win_url}
+    ensure_tool "java" "openjdk-16.0.1_9" ${openjdk_16_osx_url}
     ensure_tool "maven" "apache-maven-3.8.1" ${maven_3_8_1_url}
-    ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_win_url}
+    ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_osx_url}
     ;;
   esac
-  echo -e "* Completed devtools installation\n"
+  stderr "* Completed devtools installation\n"
 }
 
 main "$@"
