@@ -125,12 +125,12 @@ function main() {
 
   stderr "* updating devtools on ${HOME_DIR}...\n"
   case "${machine}" in
-  windows1)
+  windows)
     local openjdk_home_relative_dir=""
     local openjdk_16_url="${openjdk_16_win_url}"
     local nodejs_14_url="${nodejs_14_win_url}"
     ;;
-  windows)
+  osx)
     local openjdk_home_relative_dir="/Contents/Home"
     local openjdk_16_url="${openjdk_16_osx_url}"
     local nodejs_14_url="${nodejs_14_osx_url}"
