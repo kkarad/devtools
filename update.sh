@@ -149,7 +149,7 @@ function main() {
   }
   ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_url} && {
     devtools_rc_append "export NODE_HOME=\"${HOME_DIR}/nodejs/node-v14.17.0\""
-    path+=("\$NODE_HOME/bin")
+    path+=("\$NODE_HOME")
   }
   devtools_rc_append "\nPATH=\"$(IFS=: ; echo "${path[*]}"):\$PATH\""
 

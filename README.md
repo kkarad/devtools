@@ -6,3 +6,7 @@
 - [ ] update.sh checks github, fetches new shell script and runs update
 - [ ] python win installation
 - [ ] linux support 
+
+# references
+
+- https://sh.rustup.rs
