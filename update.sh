@@ -7,8 +7,8 @@ DEVTOOLS_RC="${HOME}/.devtoolsrc"
 openjdk_16_win_url="https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk-16.0.1%2B9/OpenJDK16U-jdk_x64_windows_hotspot_16.0.1_9.zip"
 openjdk_16_osx_url="https://github.com/AdoptOpenJDK/openjdk16-binaries/releases/download/jdk-16.0.1%2B9/OpenJDK16U-jdk_x64_mac_hotspot_16.0.1_9.tar.gz"
 maven_3_8_1_url="https://mirrors.gethosted.online/apache/maven/maven-3/3.8.1/binaries/apache-maven-3.8.1-bin.zip"
-nodejs_14_win_url="https://nodejs.org/dist/v14.17.0/node-v14.17.0-win-x64.zip"
-nodejs_14_osx_url="https://nodejs.org/dist/v14.17.0/node-v14.17.0-darwin-x64.tar.gz"
+nodejs_18_win_url="https://nodejs.org/dist/v18.9.1/node-v18.9.1-win-x64.zip"
+nodejs_18_osx_url="https://nodejs.org/dist/v18.9.1/node-v18.9.1-darwin-x64.tar.gz"
 
 function stderr_and_exit() {
   stderr "$*"
@@ -104,7 +104,7 @@ function main() {
       shift
       break
       ;;
-    -* | --*) # unsupported flags
+    -*) # unsupported flags
       stderr_and_exit "Unsupported option ${1}"
       ;;
     *) # preserve positional args
@@ -128,12 +128,12 @@ function main() {
   windows)
     local openjdk_home_relative_dir=""
     local openjdk_16_url="${openjdk_16_win_url}"
-    local nodejs_14_url="${nodejs_14_win_url}"
+    local nodejs_18_url="${nodejs_18_win_url}"
     ;;
   osx)
     local openjdk_home_relative_dir="/Contents/Home"
     local openjdk_16_url="${openjdk_16_osx_url}"
-    local nodejs_14_url="${nodejs_14_osx_url}"
+    local nodejs_18_url="${nodejs_18_osx_url}"
     ;;
   esac
 
@@ -147,13 +147,13 @@ function main() {
     devtools_rc_append "export MVN_HOME=\"${HOME_DIR}/maven/apache-maven-3.8.1\""
     path+=("\$MVN_HOME/bin")
   }
-  ensure_tool "nodejs" "node-v14.17.0" ${nodejs_14_url} && {
-    devtools_rc_append "export NODE_HOME=\"${HOME_DIR}/nodejs/node-v14.17.0\""
+  ensure_tool "nodejs" "node-v18.9.1" ${nodejs_18_url} && {
+    devtools_rc_append "export NODE_HOME=\"${HOME_DIR}/nodejs/node-v18.9.1\""
     path+=("\$NODE_HOME")
   }
   devtools_rc_append "\nPATH=\"$(IFS=: ; echo "${path[*]}"):\$PATH\""
 
-  stderr "* devtools installation completed! (f not done already add '.devtoolsrc' to your bash profile: 'source ~/.devtoolsrc'"
+  stderr "* devtools installation completed! (if not done already add '.devtoolsrc' to your bash profile: 'source ~/.devtoolsrc'"
 }
 
 main "$@"
